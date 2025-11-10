@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MAMMQA: Rethinking Information Synthesis in Multimodal Question Answering</title>
+  <meta name="description" content="MAMMQA: A multi-agent perspective for multimodal question answering. Two VLM agents and one LLM coordinate to decompose, retrieve, synthesize, and answer across text, tables, and images with improved accuracy and robustness.">
+  <meta name="keywords" content="MAMMQA, multimodal QA, MMQA, multi-agent, VLM, LLM, benchmark, evaluation">
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    :root { --brand: #3f78e0; --brand2: #5cc9f5; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Noto Sans', sans-serif; }
+    .brand-hero { background: linear-gradient(135deg, var(--brand), var(--brand2)); color: #fff; }
+    .brand-hero .title, .brand-hero .subtitle { color:#fff; }
+    .publication-links .button { margin:.25rem; }
+    .box.elevated { border-radius:12px; box-shadow: 0 10px 24px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.06); }
+    .section .title.is-3 { position:relative; padding-bottom:.5rem; margin-bottom:1.5rem; }
+    .section .title.is-3::after { content:""; position:absolute; left:0; bottom:0; width:64px; height:4px; border-radius:2px; background:linear-gradient(90deg, var(--brand), var(--brand2)); }
+    .media-caption { color:#6b7280; margin-top:.5rem; font-size: .9rem; }
+    .button.is-brand{ background:linear-gradient(135deg,#4f7df7,var(--brand2)); color:#fff; border:0; }
+    .button.is-brand:hover{ filter:brightness(0.95); }
+    .placeholder{ border:2px dashed #cbd5e1; background:#f8fafc; color:#64748b; border-radius:8px; padding:1rem; font-style:italic; }
+    .pdf-embed{ width:100%; height:70vh; min-height:420px; border:none; border-radius:8px; }
+  </style>
+</head>
+<body id="top">
+
+
+<section class="hero is-medium brand-hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-1">MAMMQA</h1>
+          <p class="subtitle is-4">Rethinking Information Synthesis in Multimodal Question Answering — A Multi‑Agent Perspective</p>
+          <div class="is-size-5" id="authors">
+            <span class="author-block"><a href="https://tejasanvekar.github.io/">Tejas Anvekar</a>,</span>
+            <span class="author-block">Krishna Singh Rajput,</span>
+            <span class="author-block"><a href="https://chitta.orissalinks.com/www/">Chitta Baral</a>,</span>
+            <span class="author-block"><a href="https://vgupta123.github.io/">Vivek Gupta</a></span>
+          </div>
+          <div class="publication-links" style="margin-top:1rem;">
+            <a class="button is-brand is-rounded" href="#"><span class="icon"><i class="fas fa-file-pdf"></i></span><span>Paper</span></a>
+            <a class="button is-brand is-rounded" href="#" aria-disabled="true" tabindex="-1" title="Coming soon" onclick="return false;"><span class="icon"><i class="fab fa-github"></i></span><span>Code</span></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="overview">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Overview</h2>
+        <div class="box elevated content has-text-justified">
+          <p>
+            Recent advances in multimodal question answering have primarily focused on combining heterogeneous modalities or fine‑tuning multimodal large language models. While these approaches have shown strong performance, they often rely on a single, generalized reasoning strategy, overlooking the unique characteristics of each modality—ultimately limiting both accuracy and interpretability.
+          </p>
+          <p>
+            MAMMQA is a multi‑agent QA framework for multimodal inputs spanning text, tables, and images. Our system includes two Visual Language Model (VLM) agents and one text‑based Large Language Model (LLM) agent. The first VLM decomposes the user query into sub‑questions and sequentially retrieves partial answers from each modality. The second VLM synthesizes and refines these results through cross‑modal reasoning. Finally, the LLM integrates the insights into a cohesive answer. This modular design enhances interpretability by making the reasoning process transparent and allows each agent to operate within its domain of expertise. Experiments on diverse multimodal QA benchmarks demonstrate that our cooperative, multi‑agent framework consistently outperforms existing baselines in both accuracy and robustness.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="section" id="problem">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Why is Multimodal QA Hard?</h2>
+        <div class="box elevated content has-text-justified">
+          <p>
+            Existing multimodal QA often uses a single, generalized reasoning strategy or flattens inputs, overlooking the unique characteristics of text, tables, and images. This limits both accuracy and interpretability.
+          </p>
+          <p>
+            MAMMQA addresses these limitations with a cooperative, multi‑agent design that makes the reasoning process transparent while letting each agent operate in its domain of expertise.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="approach">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3">How MAMMQA Works</h2>
+    <div class="content has-text-justified">
+      <p>
+        MAMMQA uses two Visual Language Model (VLM) agents and one text‑based Large Language Model (LLM). The first VLM decomposes the user query into sub‑questions and retrieves partial answers from each modality. The second VLM synthesizes these results via cross‑modal reasoning. Finally, the LLM integrates insights into a cohesive answer.
+      </p>
+    </div>
+    <div class="box elevated content has-text-centered">
+      <img src="./static/image/MAMMQA_Architecture.png" alt="MAMMQA architecture diagram" style="max-width:100%; height:auto; border-radius:8px;" />
+      <p class="media-caption">Architecture — two VLM agents (decompose, cross‑modal synthesis) and one LLM aggregator.</p>
+    </div>
+    <div class="box elevated content has-text-left">
+      <h4 class="title is-5">Agents and Roles</h4>
+      <ul>
+        <li><strong>Modality Experts (VLM)</strong>: Decompose the question; probe text, table, and image independently; extract grounded evidence per modality.</li>
+        <li><strong>Cross‑Modal Expert (VLM)</strong>: Join and reconcile signals across modalities; perform conflict checks and produce a consolidated evidence set.</li>
+        <li><strong>Aggregator (LLM)</strong>: Answer strictly from the consolidated evidence; can abstain when evidence is insufficient (question‑agnostic variant improves calibration).</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="contributions">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3">What’s New in MAMMQA</h2>
+    <div class="box elevated content">
+      <ul>
+        <li><strong>MAMMQA</strong>: A fully prompt‑driven, multi‑agent MMQA framework that splits reasoning into three interpretable stages — modality experts, cross‑modal synthesis, and evidence‑grounded aggregation — without any fine‑tuning.</li>
+        <li><strong>Unified, role‑consistent agents</strong>: A single prompt template reused across text, table, and image experts, enabling dynamic activation, efficient inference, and transparent error tracing.</li>
+        <li><strong>Zero‑shot performance</strong>: Outperforms CoT, CapCoT, and ToT baselines and matches or exceeds several fine‑tuned models on MultiModalQA and ManyModalQA across both proprietary and open‑source LLMs.</li>
+        <li><strong>Robustness and calibration</strong>: Static agents beat dynamic search (e.g., ToT) by over 10 points while reducing over‑confident, ungrounded answers, aided by a question‑agnostic aggregator variant.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="qualitative">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3">Qualitative Results</h2>
+    <div class="box elevated content">
+      <h4 class="title is-5">Representative Cases</h4>
+      <ul>
+        <li><strong>Modality disambiguation</strong>: For questions where the relevant source is not explicit, modality experts independently probe text, table, and image. The aggregator selects the best‑supported answer or abstains when evidence is insufficient. <em>Takeaway</em>: avoids guessing; prefers grounded evidence.</li>
+        <li><strong>Cross‑modal synthesis</strong>: Table values are verified against textual statements and visual cues (e.g., labels in figures). The cross‑modal expert resolves conflicts before aggregation. <em>Takeaway</em>: improves factual consistency across modalities.</li>
+        <li><strong>Failure/abstention behavior</strong>: Under broken context (e.g., shuffled text), agents abstain rather than hallucinate, propagating abstention to the aggregator. <em>Takeaway</em>: calibrated responses under uncertainty.</li>
+      </ul>
+      <p class="media-caption">Images can be added for each case (modality disambiguation, cross‑modal join, and a failure example) if available.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="benchmark">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3">The Benchmark</h2>
+    <div class="content has-text-justified">
+      <ul>
+        <li><strong>ManyModalQA</strong>: Ambiguous modality questions across text, table, image — stresses modality disambiguation and targeted retrieval.</li>
+        <li><strong>MultiModalQA</strong>: 29,918 QA pairs; 35.7% cross‑modal — stresses cross‑modal composition and information fusion.</li>
+      </ul>
+    </div>
+    <div class="box elevated content">
+      <h4 class="title is-5">Dataset Snapshot</h4>
+      <div class="columns is-multiline is-variable is-4">
+        <div class="column is-half">
+          <div class="box" style="height:100%">
+            <p class="is-size-5 has-text-weight-semibold"><span class="icon"><i class="fas fa-database"></i></span> ManyModalQA</p>
+            <div class="tags has-addons">
+              <span class="tag is-dark"><span class="icon"><i class="fas fa-circle-question"></i></span>&nbsp;Questions</span>
+              <span class="tag is-info is-light">10,190</span>
+            </div>
+            <div class="tags has-addons">
+              <span class="tag is-dark"><span class="icon"><i class="fas fa-image"></i></span>&nbsp;Images</span>
+              <span class="tag is-info is-light">2,873</span>
+            </div>
+            <div class="tags has-addons">
+              <span class="tag is-dark"><span class="icon"><i class="fas fa-file-lines"></i></span>&nbsp;Passages</span>
+              <span class="tag is-info is-light">3,789</span>
+            </div>
+            <div class="tags has-addons">
+              <span class="tag is-dark"><span class="icon"><i class="fas fa-table"></i></span>&nbsp;Tables</span>
+              <span class="tag is-info is-light">3,528</span>
+            </div>
+            <div class="tags">
+              <span class="tag is-warning is-light"><span class="icon"><i class="fas fa-shuffle"></i></span>&nbsp;Ambiguous modality</span>
+            </div>
+            <p class="is-size-7 has-text-grey">Splits: 2,036 train / 3,055 dev</p>
+          </div>
+        </div>
+        <div class="column is-half">
+          <div class="box" style="height:100%">
+            <p class="is-size-5 has-text-weight-semibold"><span class="icon"><i class="fas fa-database"></i></span> MultiModalQA</p>
+            <div class="tags has-addons">
+              <span class="tag is-dark"><span class="icon"><i class="fas fa-circle-question"></i></span>&nbsp;QA Pairs</span>
+              <span class="tag is-primary is-light">29,918</span>
+            </div>
+            <p class="is-size-7 has-text-grey" style="margin-bottom:.25rem;">Cross‑modal share</p>
+            <progress class="progress is-link" value="35.7" max="100">35.7%</progress>
+            <div class="tags">
+              <span class="tag is-success is-light"><span class="icon"><i class="fas fa-object-group"></i></span>&nbsp;Composition</span>
+            </div>
+            <p class="is-size-7 has-text-grey">Splits: 23,817 train / 2,442 dev / 3,660 test</p>
+          </div>
+        </div>
+      </div>
+      <p class="media-caption">At‑a‑glance stats; cross‑modal proportion shown for MultiModalQA.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="evaluation">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3">Quantitative Results</h2>
+    <div class="box elevated content has-text-centered">
+      <h3 class="title is-4">Alignment with Human Judgment</h3>
+      <p class="has-text-justified">
+        MAMMQA’s modular agents yield stronger agreement with expert judgments across benchmarks, improving accuracy and robustness over single‑strategy baselines.
+      </p>
+      <div class="box content has-text-left" style="margin-top: 1rem;">
+        <h4 class="title is-5">Results on ManyModalQA</h4>
+        <div class="table-container">
+          <table class="table is-bordered is-striped is-hoverable is-fullwidth">
+            <thead>
+              <tr>
+                <th>Methods</th>
+                <th>Text</th>
+                <th>Table</th>
+                <th>Image</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><em>Human</em></td><td><em>92.00</em></td><td><em>89.60</em></td><td><em>94.00</em></td><td><em>91.60</em></td></tr>
+              <tr><td>Voting</td><td>23.70</td><td>22.90</td><td>15.50</td><td>21.10</td></tr>
+              <tr><td>MMQA</td><td>48.60</td><td>40.40</td><td>27.20</td><td>39.70</td></tr>
+              <tr><td>MMQA<sup>†</sup></td><td>59.30</td><td>46.30</td><td>29.00</td><td>46.30</td></tr>
+              <tr><td colspan="5" style="text-align:center; background:#C3FFFD;"><em>UniMMQA Finetuned T5 Model</em></td></tr>
+              <tr><td>Base</td><td>46.60</td><td>60.70</td><td>30.20</td><td>45.40</td></tr>
+              <tr><td>Large</td><td>48.50</td><td>67.50</td><td>34.90</td><td>50.00</td></tr>
+              <tr><td>3B</td><td>49.80</td><td>58.30</td><td>40.90</td><td>52.10</td></tr>
+              <tr><td colspan="5" style="text-align:center; background:#EFEFEF;"><em>OpenAI 4o‑mini</em></td></tr>
+              <tr><td>CoT</td><td>87.20</td><td><u>94.23</u></td><td>57.33</td><td>81.21</td></tr>
+              <tr><td>CoT<sup>*</sup></td><td style="background:#FFBABA;">68.22</td><td style="background:#FFBABA;">70.51</td><td style="background:#FFBABA;">59.42</td><td style="background:#FFBABA;">66.54</td></tr>
+              <tr><td>CapCoT</td><td><u>87.68</u></td><td>94.05</td><td>68.26</td><td>84.41</td></tr>
+              <tr><td>ToT</td><td>84.94</td><td>93.19</td><td><u>72.90</u></td><td><u>84.70</u></td></tr>
+              <tr><td><strong>Ours</strong></td><td><strong>92.50</strong></td><td><strong>96.78</strong></td><td><strong>78.02</strong></td><td><strong>89.90</strong></td></tr>
+              <tr><td colspan="5" style="text-align:center; background:#DAE8FC;"><em>Gemini 1.5‑Flash 8B</em></td></tr>
+              <tr><td>CoT</td><td>86.05</td><td><u>91.52</u></td><td><u>68.77</u></td><td><u>82.81</u></td></tr>
+              <tr><td>CoT<sup>*</sup></td><td style="background:#FFBABA;">54.93</td><td style="background:#FFBABA;">61.15</td><td style="background:#FFBABA;">34.77</td><td style="background:#FFBABA;">51.41</td></tr>
+              <tr><td>CapCoT</td><td>85.74</td><td>91.40</td><td>63.14</td><td>81.34</td></tr>
+              <tr><td>ToT</td><td><u>86.08</u></td><td>86.81</td><td>62.81</td><td>79.80</td></tr>
+              <tr><td><strong>Ours</strong></td><td><strong>89.76</strong></td><td><strong>94.52</strong></td><td><strong>77.33</strong></td><td><strong>87.91</strong></td></tr>
+              <tr><td colspan="5" style="text-align:center; background:#D6FFD6;"><em>Qwen 2.5 VL 7B Instruct</em></td></tr>
+              <tr><td>CoT</td><td>59.84</td><td>68.71</td><td>45.47</td><td>58.87</td></tr>
+              <tr><td>CoT<sup>*</sup></td><td style="background:#FFBABA;">61.80</td><td style="background:#FFBABA;">66.73</td><td style="background:#FFBABA;">54.53</td><td style="background:#FFBABA;">61.46</td></tr>
+              <tr><td>CapCoT</td><td><u>83.50</u></td><td><u>92.86</u></td><td><u>71.07</u></td><td><u>83.41</u></td></tr>
+              <tr><td>ToT</td><td>81.95</td><td>90.41</td><td>69.29</td><td>81.89</td></tr>
+              <tr><td><strong>Ours</strong></td><td><strong>87.11</strong></td><td><strong>96.31</strong></td><td><strong>77.56</strong></td><td><strong>87.61</strong></td></tr>
+              <tr><td colspan="5" style="text-align:center; background:#FFFDC1;"><em>Qwen 2.5 VL 3B Instruct</em></td></tr>
+              <tr><td>CoT</td><td>70.08</td><td>75.61</td><td>50.70</td><td>66.54</td></tr>
+              <tr><td>CoT<sup>*</sup></td><td style="background:#FFBABA;">58.77</td><td style="background:#FFBABA;">64.55</td><td style="background:#FFBABA;">59.51</td><td style="background:#FFBABA;">58.77</td></tr>
+              <tr><td>CapCoT</td><td>80.79</td><td><u>91.38</u></td><td>67.13</td><td><u>80.63</u></td></tr>
+              <tr><td>ToT</td><td><u>82.66</u></td><td>86.14</td><td><u>68.11</u></td><td>80.42</td></tr>
+              <tr><td><strong>Ours</strong></td><td><strong>88.79</strong></td><td><strong>94.90</strong></td><td><strong>72.67</strong></td><td><strong>86.37</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="media-caption">Quantitative results on ManyModalQA. Superscript † denotes oracle; * indicates the no‑context (open‑book QA) setting.</p>
+      </div>
+      <div class="box content has-text-left" id="table1-mmq" style="margin-top: 1.5rem;">
+        <h4 class="title is-5">Quantitative Analysis on MultiModalQA</h4>
+        <ul>
+          <li>Best overall on 4o‑mini, Gemini‑8B, Qwen‑7B; competitive on Qwen‑3B.</li>
+          <li>Largest gains on table‑centric and cross‑modal (Tb, Tb&nbsp;|&nbsp;Txt, Tb&nbsp;|&nbsp;Img).</li>
+          <li>Comparable on image‑only/text–image; gains come from stronger table grounding and fusion.</li>
+        </ul>
+        <div class="table-container">
+          <table class="table is-bordered is-hoverable is-fullwidth">
+            <thead>
+              <tr>
+                <th>Modality</th>
+                <th>Img</th>
+                <th>Tb | Img</th>
+                <th>Tb | Txt</th>
+                <th>Tb</th>
+                <th>Txt | Img</th>
+                <th>Txt</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td colspan="8" style="text-align:center; background:#efefef;"><em>OpenAI 4o Mini</em></td></tr>
+              <tr><td>CoT</td><td>33.15</td><td>53.81</td><td>66.67</td><td><u>84.55</u></td><td>55.95</td><td><u>77.67</u></td><td>64.60</td></tr>
+              <tr><td>CapCoT</td><td>53.91</td><td><u>64.98</u></td><td><u>69.05</u></td><td>84.14</td><td><strong>61.90</strong></td><td>77.33</td><td><u>70.39</u></td></tr>
+              <tr><td>ToT</td><td><u>54.97</u></td><td>63.35</td><td>64.37</td><td>67.70</td><td><u>61.11</u></td><td>69.65</td><td>64.88</td></tr>
+              <tr><td><strong>Ours</strong></td><td><strong>61.31</strong></td><td><strong>70.30</strong></td><td><strong>81.58</strong></td><td><strong>89.16</strong></td><td>59.75</td><td><strong>85.57</strong></td><td><strong>76.37</strong></td></tr>
+              <tr><td colspan="8" style="text-align:center; background:#dae8fc;"><em>Gemini 1.5‑Flash 8B</em></td></tr>
+              <tr><td>CoT</td><td>47.41</td><td><u>53.38</u></td><td><strong>58.88</strong></td><td>74.73</td><td><strong>46.43</strong></td><td><u>72.82</u></td><td><u>62.16</u></td></tr>
+              <tr><td>CapCoT</td><td><u>47.84</u></td><td>50.02</td><td>55.87</td><td><u>74.88</u></td><td>39.29</td><td>72.42</td><td>60.66</td></tr>
+              <tr><td>ToT</td><td>36.93</td><td>43.06</td><td>52.32</td><td>53.72</td><td>33.33</td><td>70.61</td><td>53.10</td></tr>
+              <tr><td><strong>Ours</strong></td><td><strong>51.23</strong></td><td><strong>54.12</strong></td><td><u>57.42</u></td><td><strong>83.69</strong></td><td><u>42.86</u></td><td><strong>79.47</strong></td><td><strong>65.84</strong></td></tr>
+              <tr><td colspan="8" style="text-align:center; background:#d6ffd6;"><em>Qwen 2.5 VL 7B Instruct</em></td></tr>
+              <tr><td>CoT</td><td>29.11</td><td>32.58</td><td>30.66</td><td>38.75</td><td>17.86</td><td>38.28</td><td>33.84</td></tr>
+              <tr><td>CapCoT</td><td>48.10</td><td><u>53.94</u></td><td><u>60.56</u></td><td><u>71.52</u></td><td><u>41.67</u></td><td><u>71.31</u></td><td><u>61.54</u></td></tr>
+              <tr><td>ToT</td><td><strong>55.90</strong></td><td>47.82</td><td>52.50</td><td>60.83</td><td>41.64</td><td>64.44</td><td>57.12</td></tr>
+              <tr><td><strong>Ours</strong></td><td><u>50.74</u></td><td><strong>55.88</strong></td><td><strong>63.68</strong></td><td><strong>81.35</strong></td><td><strong>53.26</strong></td><td><strong>80.51</strong></td><td><strong>67.56</strong></td></tr>
+              <tr><td colspan="8" style="text-align:center; background:#fffdc1;"><em>Qwen 2.5 VL 3B Instruct</em></td></tr>
+              <tr><td>CoT</td><td>11.86</td><td>23.71</td><td>22.14</td><td>32.25</td><td>14.29</td><td>25.52</td><td>23.15</td></tr>
+              <tr><td>CapCoT</td><td><strong>48.10</strong></td><td>42.08</td><td><u>47.08</u></td><td><strong>64.94</strong></td><td><strong>39.29</strong></td><td>65.04</td><td><strong>53.98</strong></td></tr>
+              <tr><td>ToT</td><td><u>42.01</u></td><td><strong>43.65</strong></td><td><strong>48.40</strong></td><td>52.57</td><td>33.74</td><td><u>66.51</u></td><td><u>52.91</u></td></tr>
+              <tr><td><strong>Ours</strong></td><td>33.73</td><td><u>43.10</u></td><td>45.33</td><td><u>62.29</u></td><td><u>35.52</u></td><td><strong>67.73</strong></td><td>52.12</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="media-caption">Columns: Img, Tb&nbsp;|&nbsp;Img, Tb&nbsp;|&nbsp;Txt, Tb, Txt&nbsp;|&nbsp;Img, Txt, Total. Metric is answer accuracy (%), higher is better. Rows group prompting strategies under each backbone; bold marks best and underline marks second‑best within a row block.</p>
+        <div class="notification is-info is-light" style="margin-top:.75rem;">
+          <strong>Dynamic vs Static (Table&nbsp;1):</strong> On Qwen‑7B, ToT 57.12 vs Ours 67.56 (<span class="has-text-weight-bold">+10.44</span>); a lean static 3‑agent pipeline is both more accurate and compute‑efficient. See details in <a href="#ablations-static-dynamic">Ablations</a>.
+        </div>
+      </div>
+      <div class="box content has-text-left" style="margin-top: 1.5rem;">
+        <h4 class="title is-5">Overall Comparison on MultiModalQA</h4>
+        <ul>
+          <li>Overall vs CoT: +28.9 (3B) / +33.7 (7B).</li>
+          <li>7B: 67.56 Overall; 73.16 Single (competitive with finetuned).</li>
+          <li>Multi trails top finetuned but gap narrows without task‑specific training.</li>
+        </ul>
+        <div class="table-container">
+          <table class="table is-bordered is-hoverable is-fullwidth">
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>Single</th>
+                <th>Multi</th>
+                <th>Overall</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td colspan="4" style="text-align:center; background:#efefef;"><strong>Finetuned Models</strong></td></tr>
+              <tr><td>AutoRouting</td><td>51.7</td><td>34.2</td><td>44.7</td></tr>
+              <tr><td>ImplicitDecomp</td><td>51.6</td><td>44.6</td><td>48.8</td></tr>
+              <tr><td>Binder</td><td>–</td><td>–</td><td>51.0</td></tr>
+              <tr><td>SKURG</td><td>66.1</td><td>52.5</td><td>59.8</td></tr>
+              <tr><td>PERQA</td><td>69.7</td><td>54.7</td><td>62.8</td></tr>
+              <tr><td>Solar</td><td>69.7</td><td>55.5</td><td>59.8</td></tr>
+              <tr><td>UniRaG</td><td><strong>71.7</strong></td><td><u>62.3</u></td><td>67.4</td></tr>
+              <tr><td>AETGA</td><td><u>69.8</u></td><td><strong>64.7</strong></td><td>68.8</td></tr>
+              <tr><td>PReasM L</td><td>–</td><td>–</td><td>59.0</td></tr>
+              <tr><td>MMQA‑T5 L</td><td>–</td><td>–</td><td>57.9</td></tr>
+              <tr><td>UniMMQA (T5 B)</td><td>–</td><td>–</td><td>67.9</td></tr>
+              <tr><td>UniMMQA (T5 L)</td><td>–</td><td>–</td><td><u>71.3</u></td></tr>
+              <tr><td>UniMMQA (T5 3B)</td><td>–</td><td>–</td><td><strong>75.5</strong></td></tr>
+              <tr><td colspan="4" style="text-align:center; background:#D6FFD6;"><strong>Zero‑Shot Models</strong></td></tr>
+              <tr><td>CoT Qwen 3B</td><td>23.75</td><td>22.24</td><td>23.15</td></tr>
+              <tr><td>CoT Qwen 7B</td><td>36.07</td><td>30.91</td><td>33.84</td></tr>
+              <tr><td><u>Our Agent 3B</u></td><td><u>57.72</u></td><td><u>43.39</u></td><td><u>52.12</u></td></tr>
+              <tr><td><strong>Our Agent 7B</strong></td><td><strong>73.16</strong></td><td><strong>58.93</strong></td><td><strong>67.56</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="media-caption">Columns: Single (one‑modality), Multi (cross‑modal), Overall (full test mix). Metric is answer accuracy (%), higher is better. Top block shows finetuned systems; bottom compares zero‑shot CoT vs our agent across 3B/7B backbones.</p>
+      </div>
+    </div>
+    <div class="box elevated content has-text-centered" style="margin-top:2rem;">
+      <h3 class="title is-4">Ablations & Robustness</h3>
+      <div class="content has-text-left">
+        <h4 class="title is-5" id="ablations-static-dynamic">Static vs. Dynamic Agents</h4>
+        <p>
+          Compared to Tree‑of‑Thoughts (dynamic search), our lean, static 3‑agent pipeline is more accurate and calibrated (Qwen‑7B: 57.12 → 67.56; +10.44; see <a href="#table1-mmq">Table&nbsp;1</a>), avoiding confidently incorrect answers while reducing compute.
+        </p>
+        <h4 class="title is-5">Robustness Under Perturbations</h4>
+        <div class="table-container">
+          <table class="table is-bordered is-narrow is-fullwidth">
+            <thead>
+              <tr>
+                <th>Model (7B)</th><th>Original</th><th>Text Shuffle</th><th>Irrelevant Context</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>TreeOfThoughts</td><td>57.12</td><td>33.01 (−42.21%)</td><td>52.45 (−08.18%)</td></tr>
+              <tr><td>CoT</td><td>33.84</td><td>31.18 (−07.86%)</td><td>29.54 (−12.71%)</td></tr>
+              <tr><td>CapCoT</td><td><u>61.54</u></td><td><u>37.47</u> (−39.11%)</td><td><u>55.39</u> (−09.99%)</td></tr>
+              <tr><td><strong>OurAgent</strong></td><td><strong>67.56</strong></td><td><strong>05.92</strong> (−91.24%)</td><td><strong>63.74</strong> (−05.65%)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-container">
+          <table class="table is-bordered is-narrow is-fullwidth">
+            <thead>
+              <tr>
+                <th>Model (3B)</th><th>Original</th><th>Text Shuffle</th><th>Irrelevant Context</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>TreeOfThoughts</td><td>52.91</td><td><u>49.22</u> (−06.97%)</td><td>47.11 (−10.96%)</td></tr>
+              <tr><td>CoT</td><td>23.15</td><td>20.48 (−11.53%)</td><td>19.62 (−15.25%)</td></tr>
+              <tr><td>CapCoT</td><td><u>53.98</u></td><td><u>49.22</u> (−08.82%)</td><td><u>47.12</u> (−12.71%)</td></tr>
+              <tr><td><strong>OurAgent</strong></td><td><strong>52.12</strong></td><td><strong>07.66</strong> (−85.30%)</td><td><strong>48.05</strong> (−07.81%)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="media-caption">Robustness of different reasoning strategies under perturbations across model sizes.</p>
+        <h4 class="title is-5" style="margin-top:1rem;">Calibration via Question‑Agnostic Aggregator</h4>
+        <p>
+          CoT often answers confidently without grounded evidence. Our agents separate extraction from generation and allow abstention; making the aggregator question‑agnostic further reduces bias toward priors and improves factuality.
+        </p>
+        <img src="./static/image/W_WO_Q.png" alt="Aggregator performance with and without question" style="max-width:100%; height:auto; border-radius:8px;" />
+        <p class="media-caption">Aggregator Agent performance with and without the original question on MultiModalQA.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <h2 class="title">BibTeX</h2>
+    <div class="box elevated">
+      <button class="button is-small is-brand" id="copy-bibtex" style="float:right;">Copy</button>
+      <pre><code id="bibtex-entry">
+      </code></pre>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="content has-text-centered">
+      <p>Page source code was adapted from <a href="https://nerfies.github.io/" target="_blank" rel="noopener">here</a>.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+  function onReady(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn); }
+  onReady(()=>{
+    const btn = document.getElementById('copy-bibtex');
+    const code = document.getElementById('bibtex-entry');
+    if (btn && code) {
+      btn.addEventListener('click', async ()=>{
+        try {
+          await navigator.clipboard.writeText(code.innerText.trim());
+          btn.classList.add('is-success');
+          btn.textContent = 'Copied';
+          setTimeout(()=>{ btn.classList.remove('is-success'); btn.textContent='Copy'; }, 1500);
+        } catch (e) {
+          btn.textContent = 'Copy failed';
+        }
+      });
+    }
+  });
+</script>
+
+</body>
+</html>
